@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Theo dõi cơn gò</title>
+<style>
+:root{
+  --ink:#0B0F1F;
+  --card:#151A32;
+  --card-2:#1D2340;
+  --line:#2A315A;
+  --mist:#E9EBF7;
+  --dim:#98A0C8;
+  --pulse:#79D9C0;
+  --amber:#F3B45E;
+  --rose:#E88A9A;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ink);color:var(--mist);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{padding:20px 16px calc(28px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto}
+
+.eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:600}
+h1{font-size:19px;font-weight:650;margin:6px 0 0;letter-spacing:-.01em}
+header{margin-bottom:22px}
+
+/* ---- Signature: breathing ring button ---- */
+.stage{position:relative;display:grid;place-items:center;height:238px;margin:8px 0 4px}
+.ring{position:absolute;width:180px;height:180px;border-radius:50%;border:1px solid var(--line)}
+.ring.b{width:214px;height:214px}
+.stage.on .ring{border-color:rgba(121,217,192,.5);animation:breathe 10s ease-in-out infinite}
+.stage.on .ring.b{border-color:rgba(121,217,192,.22);animation-delay:.4s}
+@keyframes breathe{0%{transform:scale(.86);opacity:.35}40%{transform:scale(1.06);opacity:.95}100%{transform:scale(.86);opacity:.35}}
+button.big{
+  position:relative;width:168px;height:168px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--card-2);color:var(--mist);display:grid;place-items:center;gap:2px;
+  box-shadow:inset 0 0 0 1px var(--line);transition:transform .12s ease,background .2s ease
+}
+button.big:active{transform:scale(.96)}
+button.big .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--dim)}
+button.big .num{font-family:var(--mono);font-size:38px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stage.on button.big{background:linear-gradient(180deg,#1E4A44,#173B37);box-shadow:inset 0 0 0 1px rgba(121,217,192,.45)}
+.stage.on button.big .lbl{color:var(--pulse)}
+.breathe-hint{text-align:center;font-size:12px;color:var(--dim);height:18px;margin-bottom:14px}
+.stage.on ~ .breathe-hint{color:var(--pulse)}
+
+/* ---- stats ---- */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.cell{background:var(--card);border-radius:14px;padding:12px 10px;text-align:center}
+.cell .k{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:650;line-height:1.4}
+.cell .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ---- 5-1-1 ---- */
+.rule{background:var(--card);border-radius:16px;padding:14px 16px;margin-bottom:18px;border:1px solid transparent}
+.rule.met{border-color:var(--amber);background:#2A2415}
+.rule h2{font-size:12px;margin:0 0 10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:650}
+.rule.met h2{color:var(--amber)}
+.chk{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:3px 0;color:var(--dim)}
+.chk b{width:17px;height:17px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:10px;flex:none}
+.chk.ok{color:var(--mist)}
+.chk.ok b{background:var(--pulse);border-color:var(--pulse);color:#0B2A24}
+.rule p{margin:11px 0 0;font-size:12.5px;line-height:1.55;color:var(--dim)}
+.rule.met p{color:var(--amber)}
+
+/* ---- history ---- */
+.hh{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px}
+.hh .eyebrow{color:var(--dim)}
+.day{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:650;margin:16px 2px 7px}
+.row{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;background:var(--card);border-radius:12px;padding:11px 13px;margin-bottom:6px}
+.row .t{font-family:var(--mono);font-size:14px;color:var(--dim);font-variant-numeric:tabular-nums}
+.row .m{font-family:var(--mono);font-size:14.5px;font-variant-numeric:tabular-nums}
+.row .m i{font-style:normal;color:var(--dim);font-size:12px;margin-left:2px}
+.row .m .sep{color:var(--line);margin:0 7px}
+.row .note{display:block;font-family:var(--sans);font-size:12px;color:var(--dim);margin-top:3px}
+.pill{font-size:10px;letter-spacing:.06em;padding:3px 7px;border-radius:20px;background:var(--card-2);color:var(--dim);font-weight:650;text-transform:uppercase}
+.pill.m2{background:#3A2E14;color:var(--amber)}
+.pill.m3{background:#40222B;color:var(--rose)}
+.del{background:none;border:0;color:var(--line);font-size:19px;line-height:1;cursor:pointer;padding:2px 4px}
+.del:hover{color:var(--rose)}
+.empty{background:var(--card);border-radius:16px;padding:22px 18px;text-align:center;color:var(--dim);font-size:13.5px;line-height:1.6}
+
+/* ---- sheet (intensity) ---- */
+.sheet{position:fixed;inset:0;background:rgba(6,9,20,.72);display:none;align-items:flex-end;z-index:20;padding:16px;backdrop-filter:blur(3px)}
+.sheet.open{display:flex}
+.sheet .inner{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:508px;margin:0 auto}
+.sheet h3{margin:0 0 4px;font-size:16px;font-weight:650}
+.sheet .sub{font-size:13px;color:var(--dim);margin-bottom:16px;font-family:var(--mono)}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.opt{background:var(--card-2);border:1px solid var(--line);color:var(--mist);border-radius:12px;padding:13px 6px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.opt:active{transform:scale(.97)}
+input[type=text],input[type=time],input[type=number]{width:100%;background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:12px 13px;color:var(--mist);font-size:14px;font-family:var(--sans);margin-bottom:10px}
+input:focus-visible,button:focus-visible,.opt:focus-visible{outline:2px solid var(--pulse);outline-offset:2px}
+
+/* ---- actions ---- */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
+.btn{background:var(--card);border:1px solid var(--line);color:var(--mist);border-radius:12px;padding:13px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.btn.wide{grid-column:1/-1}
+.btn.ghost{border-color:transparent;color:var(--dim)}
+.btn:active{transform:scale(.98)}
+
+.disc{margin-top:22px;font-size:11.5px;line-height:1.65;color:var(--dim);border-top:1px solid var(--line);padding-top:14px}
+.disc b{color:var(--rose);font-weight:650}
+
+.modal{position:fixed;inset:0;background:rgba(6,9,20,.9);display:none;flex-direction:column;z-index:30;padding:16px;overflow:auto}
+.modal.open{display:flex}
+.modal img{width:100%;max-width:508px;margin:0 auto;border-radius:12px;display:block}
+.modal .hint{text-align:center;font-size:12.5px;color:var(--dim);margin:14px auto;max-width:400px;line-height:1.6}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Nhật ký chuyển dạ</div>
+  <h1>Theo dõi cơn gò</h1>
+</header>
+
+<div class="stage" id="stage">
+  <div class="ring"></div><div class="ring b"></div>
+  <button class="big" id="mainBtn">
+    <span class="lbl" id="btnLbl">Bắt đầu</span>
+    <span class="num" id="btnNum">0:00</span>
+  </button>
+</div>
+<div class="breathe-hint" id="hint"></div>
+
+<div class="grid3">
+  <div class="cell"><div class="k">Cơn / 1 giờ</div><div class="v" id="s1">0</div></div>
+  <div class="cell"><div class="k">Dài TB</div><div class="v" id="s2">–</div></div>
+  <div class="cell"><div class="k">Cách nhau</div><div class="v" id="s3">–</div></div>
+</div>
+
+<div class="rule" id="rule">
+  <h2>Dấu hiệu 5–1–1</h2>
+  <div class="chk" id="c1"><b>✓</b><span>Cách nhau ≤ 5 phút</span></div>
+  <div class="chk" id="c2"><b>✓</b><span>Mỗi cơn kéo dài ≥ 1 phút</span></div>
+  <div class="chk" id="c3"><b>✓</b><span>Đều như vậy ≥ 1 giờ</span></div>
+  <p id="ruleMsg">Khi đủ cả ba dấu hiệu, thường là lúc nên vào bệnh viện. Hãy làm theo hướng dẫn riêng của bác sĩ nếu khác.</p>
+</div>
+
+<div class="hh">
+  <div class="eyebrow">Lịch sử</div>
+  <div class="eyebrow" id="count"></div>
+</div>
+<div id="list"></div>
+
+<div class="acts">
+  <button class="btn" id="exportImg">Xuất ảnh</button>
+  <button class="btn" id="exportCsv">Xuất CSV</button>
+  <button class="btn wide ghost" id="manual">+ Thêm cơn đã bỏ sót</button>
+  <button class="btn wide ghost" id="clear">Xoá toàn bộ lịch sử</button>
+</div>
+
+<div class="disc">
+  Ứng dụng chỉ giúp ghi chép, không thay thế chẩn đoán y khoa.
+  <b>Đi khám ngay</b> nếu ra máu, vỡ nước ối, đau bụng dữ dội liên tục, thai ít cử động, đau đầu / mờ mắt, hoặc gò nhiều khi chưa đủ 37 tuần.
+</div>
+
+<!-- intensity sheet -->
+<div class="sheet" id="sheet">
+  <div class="inner">
+    <h3>Cơn gò vừa rồi mạnh thế nào?</h3>
+    <div class="sub" id="sheetSub"></div>
+    <div class="opts">
+      <button class="opt" data-i="1">Nhẹ</button>
+      <button class="opt" data-i="2">Vừa</button>
+      <button class="opt" data-i="3">Mạnh</button>
+    </div>
+    <input type="text" id="noteIn" placeholder="Ghi chú (không bắt buộc)">
+    <button class="btn wide ghost" id="skip">Bỏ qua</button>
+  </div>
+</div>
+
+<!-- manual sheet -->
+<div class="sheet" id="msheet">
+  <div class="inner">
+    <h3>Thêm cơn đã bỏ sót</h3>
+    <div class="sub">Nhập giờ bắt đầu và số giây kéo dài</div>
+    <input type="time" id="mTime">
+    <input type="number" id="mDur" placeholder="Kéo dài (giây)" min="1" max="900">
+    <div class="opts">
+      <button class="btn" id="mSave" style="grid-column:1/3">Lưu</button>
+      <button class="btn ghost" id="mCancel">Huỷ</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="hint">Nhấn giữ vào ảnh để lưu về máy, hoặc dùng nút bên dưới.</div>
+  <img id="modalImg" alt="Ảnh lịch sử cơn gò">
+  <div class="acts" style="max-width:508px;margin:14px auto 0;width:100%">
+    <a class="btn" id="dl" download="con-go.png" style="text-align:center;text-decoration:none">Tải ảnh</a>
+    <button class="btn ghost" id="closeModal">Đóng</button>
+  </div>
+</div>
+
+<script>
+/* ---------- storage: Claude artifact -> localStorage -> memory ---------- */
+const KEY='congo_v1';
+const hasArt = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
+let mem=null;
+async function load(){
+  if(hasArt){ try{ const r=await window.storage.get(KEY); if(r&&r.value) return JSON.parse(r.value); }catch(e){} }
+  try{ const s=localStorage.getItem(KEY); if(s) return JSON.parse(s); }catch(e){}
+  return mem;
+}
+async function save(v){
+  mem=v;
+  if(hasArt){ try{ await window.storage.set(KEY,JSON.stringify(v)); return; }catch(e){} }
+  try{ localStorage.setItem(KEY,JSON.stringify(v)); }catch(e){}
+}
+
+let S={items:[],active:null};
+let tick=null, wake=null;
+
+/* ---------- format ---------- */
+const p2=n=>String(n).padStart(2,'0');
+const mmss=ms=>{const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+':'+p2(s%60)};
+const clock=ts=>{const d=new Date(ts);return p2(d.getHours())+':'+p2(d.getMinutes())};
+const gapTxt=ms=>{if(ms==null)return '–';const s=Math.round(ms/1000);const m=Math.floor(s/60);return m>=1?(m+"'"+p2(s%60)):(s+'s')};
+const dayKey=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+const dayLabel=ts=>{const d=new Date(ts),t=new Date(),y=new Date(Date.now()-864e5);
+  if(dayKey(ts)===dayKey(t))return 'Hôm nay';
+  if(dayKey(ts)===dayKey(y))return 'Hôm qua';
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()};
+
+/* ---------- derive ---------- */
+function withDerived(){
+  const a=[...S.items].sort((x,y)=>x.start-y.start);
+  return a.map((it,i)=>({...it,dur:it.end-it.start,gap:i>0?it.start-a[i-1].start:null}));
+}
+function recent(mins=60){const c=Date.now()-mins*6e4;return withDerived().filter(x=>x.start>=c)}
+function avg(arr){return arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:null}
+
+/* ---------- render ---------- */
+function render(){
+  const on=S.active!=null;
+  document.getElementById('stage').classList.toggle('on',on);
+  document.getElementById('btnLbl').textContent=on?'Kết thúc':'Bắt đầu';
+
+  const d=withDerived(), last=d[d.length-1];
+  if(!on){
+    document.getElementById('btnNum').textContent=last?mmss(last.dur):'0:00';
+    document.getElementById('hint').textContent=last?('Cơn gần nhất '+clock(last.start)+' · '+mmss(last.dur)):'Khi thấy gò, nhấn Bắt đầu.';
+  }
+
+  const r=recent(60);
+  const durs=r.map(x=>x.dur), gaps=r.map(x=>x.gap).filter(v=>v!=null);
+  document.getElementById('s1').textContent=r.length;
+  document.getElementById('s2').textContent=durs.length?mmss(avg(durs)):'–';
+  document.getElementById('s3').textContent=gaps.length?gapTxt(avg(gaps)):'–';
+
+  const ok1=gaps.length>=2&&avg(gaps)<=5*6e4;
+  const ok2=durs.length>=2&&avg(durs)>=55e3;
+  const ok3=r.length>=2&&(Date.now()-r[0].start)>=55*6e4;
+  [['c1',ok1],['c2',ok2],['c3',ok3]].forEach(([id,v])=>document.getElementById(id).classList.toggle('ok',v));
+  const met=ok1&&ok2&&ok3;
+  document.getElementById('rule').classList.toggle('met',met);
+  document.getElementById('ruleMsg').textContent=met
+    ? 'Đủ cả ba dấu hiệu. Gọi cho bác sĩ / bệnh viện và chuẩn bị đi ngay.'
+    : 'Khi đủ cả ba dấu hiệu, thường là lúc nên vào bệnh viện. Hãy làm theo hướng dẫn riêng của bác sĩ nếu khác.';
+
+  document.getElementById('count').textContent=d.length?d.length+' cơn':'';
+  const L=document.getElementById('list');
+  if(!d.length){L.innerHTML='<div class="empty">Chưa có cơn gò nào được ghi.<br>Bấm nút tròn khi cơn gò bắt đầu, bấm lần nữa khi hết.</div>';return}
+  let h='',cur='';
+  [...d].reverse().forEach(x=>{
+    const k=dayKey(x.start);
+    if(k!==cur){cur=k;h+='<div class="day">'+dayLabel(x.start)+'</div>'}
+    const pi=x.intensity?'<span class="pill m'+x.intensity+'">'+['','Nhẹ','Vừa','Mạnh'][x.intensity]+'</span>':'';
+    h+='<div class="row"><span class="t">'+clock(x.start)+'</span><span class="m">'+mmss(x.dur)+'<i>dài</i>'
+      +'<span class="sep">·</span>'+gapTxt(x.gap)+'<i>cách</i>'
+      +(x.note?'<span class="note">'+esc(x.note)+'</span>':'')
+      +'</span><span style="display:flex;gap:6px;align-items:center">'+pi+'<button class="del" data-id="'+x.id+'" aria-label="Xoá">×</button></span></div>';
+  });
+  L.innerHTML=h;
+  L.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+    S.items=S.items.filter(i=>i.id!=b.dataset.id);await save(S);render();
+  });
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- timer ---------- */
+function startTick(){
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    if(S.active==null)return;
+    const el=Date.now()-S.active;
+    document.getElementById('btnNum').textContent=mmss(el);
+    const ph=Math.floor((el/1000)%10)<4;
+    document.getElementById('hint').textContent=ph?'Hít vào chậm…':'Thở ra dài…';
+  },250);
+}
+async function toggle(){
+  if(navigator.vibrate)navigator.vibrate(18);
+  if(S.active==null){
+    S.active=Date.now();await save(S);render();startTick();
+    try{ if('wakeLock' in navigator) wake=await navigator.wakeLock.request('screen'); }catch(e){}
+  }else{
+    const it={id:Date.now()+'',start:S.active,end:Date.now(),intensity:null,note:''};
+    if(it.end-it.start<2000){S.active=null;await save(S);clearInterval(tick);render();return}
+    S.items.push(it);S.active=null;await save(S);clearInterval(tick);render();
+    try{ if(wake){await wake.release();wake=null} }catch(e){}
+    document.getElementById('sheetSub').textContent=clock(it.start)+' · kéo dài '+mmss(it.end-it.start);
+    document.getElementById('noteIn').value='';
+    document.getElementById('sheet').classList.add('open');
+    document.getElementById('sheet').dataset.id=it.id;
+  }
+}
+document.getElementById('mainBtn').onclick=toggle;
+
+/* ---------- intensity sheet ---------- */
+async function closeSheet(){
+  const sh=document.getElementById('sheet');
+  const it=S.items.find(i=>i.id===sh.dataset.id);
+  if(it){it.note=document.getElementById('noteIn').value.trim();await save(S)}
+  sh.classList.remove('open');render();
+}
+document.querySelectorAll('.opt[data-i]').forEach(b=>b.onclick=async()=>{
+  const it=S.items.find(i=>i.id===document.getElementById('sheet').dataset.id);
+  if(it)it.intensity=+b.dataset.i;
+  await closeSheet();
+});
+document.getElementById('skip').onclick=closeSheet;
+
+/* ---------- manual add ---------- */
+document.getElementById('manual').onclick=()=>{
+  const n=new Date();
+  document.getElementById('mTime').value=p2(n.getHours())+':'+p2(n.getMinutes());
+  document.getElementById('mDur').value='';
+  document.getElementById('msheet').classList.add('open');
+};
+document.getElementById('mCancel').onclick=()=>document.getElementById('msheet').classList.remove('open');
+document.getElementById('mSave').onclick=async()=>{
+  const t=document.getElementById('mTime').value, dur=+document.getElementById('mDur').value;
+  if(!t||!dur||dur<1)return;
+  const [hh,mm]=t.split(':').map(Number);
+  const d=new Date();d.setHours(hh,mm,0,0);
+  if(d.getTime()>Date.now())d.setDate(d.getDate()-1);
+  S.items.push({id:Date.now()+'',start:d.getTime(),end:d.getTime()+dur*1000,intensity:null,note:'nhập tay'});
+  await save(S);document.getElementById('msheet').classList.remove('open');render();
+};
+
+/* ---------- clear ---------- */
+document.getElementById('clear').onclick=async()=>{
+  if(!S.items.length)return;
+  if(confirm('Xoá toàn bộ '+S.items.length+' cơn gò đã ghi? Không thể hoàn tác.')){
+    S.items=[];S.active=null;await save(S);render();
+  }
+};
+
+/* ---------- CSV ---------- */
+document.getElementById('exportCsv').onclick=()=>{
+  const d=withDerived();
+  if(!d.length)return;
+  const rows=[['Ngay','Bat dau','Ket thuc','Keo dai (giay)','Cach con truoc (giay)','Cuong do','Ghi chu']];
+  d.forEach(x=>rows.push([dayKey(x.start),clock(x.start),clock(x.end),Math.round(x.dur/1000),
+    x.gap!=null?Math.round(x.gap/1000):'',['','Nhe','Vua','Manh'][x.intensity||0],x.note||'']));
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  dlBlob(new Blob([csv],{type:'text/csv'}),'con-go.csv');
+};
+function dlBlob(blob,name){
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+
+/* ---------- PNG export ---------- */
+document.getElementById('exportImg').onclick=()=>{
+  const d=withDerived();
+  if(!d.length){alert('Chưa có dữ liệu để xuất.');return}
+  const rows=d.slice(-60).reverse();
+  const W=760,PAD=44,RH=44,HEAD=286,FOOT=64;
+  const days=new Set(rows.map(x=>dayKey(x.start)));
+  const H=HEAD+rows.length*RH+days.size*34+FOOT;
+  const dpr=2,c=document.createElement('canvas');
+  c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  const M='ui-monospace,"SF Mono",Menlo,monospace',F='-apple-system,"Segoe UI",Roboto,sans-serif';
+
+  g.fillStyle='#0B0F1F';g.fillRect(0,0,W,H);
+  g.fillStyle='#98A0C8';g.font='600 11px '+F;
+  g.fillText('NHẬT KÝ CHUYỂN DẠ',PAD,52);
+  g.fillStyle='#E9EBF7';g.font='650 27px '+F;
+  g.fillText('Lịch sử cơn gò',PAD,86);
+
+  const first=d[0].start,lastT=d[d.length-1].start;
+  g.fillStyle='#98A0C8';g.font='13px '+M;
+  g.fillText(dayLabel(first)+' '+clock(first)+'  →  '+dayLabel(lastT)+' '+clock(lastT),PAD,110);
+  g.fillText('Xuất lúc '+clock(Date.now())+' ngày '+new Date().toLocaleDateString('vi-VN'),PAD,130);
+
+  const r=recent(60),durs=r.map(x=>x.dur),gaps=r.map(x=>x.gap).filter(v=>v!=null);
+  const box=[['TỔNG SỐ CƠN',String(d.length)],['DÀI TB (1 GIỜ)',durs.length?mmss(avg(durs)):'–'],['CÁCH NHAU (1 GIỜ)',gaps.length?gapTxt(avg(gaps)):'–']];
+  const bw=(W-PAD*2-16)/3;
+  box.forEach((b,i)=>{
+    const x=PAD+i*(bw+8);
+    g.fillStyle='#151A32';rr(g,x,152,bw,74,14);g.fill();
+    g.fillStyle='#98A0C8';g.font='600 9.5px '+F;g.fillText(b[0],x+14,176);
+    g.fillStyle='#E9EBF7';g.font='600 24px '+M;g.fillText(b[1],x+14,208);
+  });
+
+  g.fillStyle='#98A0C8';g.font='600 10px '+F;
+  g.fillText('BẮT ĐẦU',PAD,258);g.fillText('KÉO DÀI',PAD+120,258);
+  g.fillText('CÁCH CƠN TRƯỚC',PAD+250,258);g.fillText('CƯỜNG ĐỘ / GHI CHÚ',PAD+430,258);
+  g.strokeStyle='#2A315A';g.lineWidth=1;
+  g.beginPath();g.moveTo(PAD,268);g.lineTo(W-PAD,268);g.stroke();
+
+  let y=268,cur='';
+  rows.forEach(x=>{
+    const k=dayKey(x.start);
+    if(k!==cur){cur=k;y+=34;g.fillStyle='#79D9C0';g.font='600 11px '+F;g.fillText(dayLabel(x.start).toUpperCase(),PAD,y-8)}
+    y+=RH;
+    g.fillStyle='#E9EBF7';g.font='15px '+M;
+    g.fillText(clock(x.start),PAD,y-16);
+    g.fillText(mmss(x.dur),PAD+120,y-16);
+    g.fillStyle=x.gap!=null&&x.gap<=5*6e4?'#F3B45E':'#E9EBF7';
+    g.fillText(gapTxt(x.gap),PAD+250,y-16);
+    g.fillStyle='#98A0C8';g.font='14px '+F;
+    const meta=[['','Nhẹ','Vừa','Mạnh'][x.intensity||0],x.note].filter(Boolean).join(' · ');
+    g.fillText(meta||'—',PAD+430,y-16);
+    g.strokeStyle='#1D2340';g.beginPath();g.moveTo(PAD,y);g.lineTo(W-PAD,y);g.stroke();
+  });
+
+  g.fillStyle='#98A0C8';g.font='12px '+F;
+  g.fillText('Khoảng cách tính từ lúc bắt đầu cơn này đến lúc bắt đầu cơn sau. Ghi chép tham khảo, không thay thế chẩn đoán y khoa.',PAD,y+34);
+  if(d.length>60){g.fillText('Chỉ hiển thị 60 cơn gần nhất — dùng Xuất CSV để lấy đầy đủ.',PAD,y+52)}
+
+  c.toBlob(b=>{
+    const u=URL.createObjectURL(b);
+    document.getElementById('modalImg').src=u;
+    document.getElementById('dl').href=u;
+    document.getElementById('dl').download='con-go-'+dayKey(Date.now())+'.png';
+    document.getElementById('modal').classList.add('open');
+  },'image/png');
+};
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+document.getElementById('closeModal').onclick=()=>document.getElementById('modal').classList.remove('open');
+
+/* ---------- boot ---------- */
+(async()=>{
+  const saved=await load();
+  if(saved&&Array.isArray(saved.items))S={items:saved.items,active:saved.active??null};
+  render();
+  if(S.active!=null)startTick();
+  setInterval(()=>{if(S.active==null)render()},30000);
+})();
+</script>
+</body>
+</html>
