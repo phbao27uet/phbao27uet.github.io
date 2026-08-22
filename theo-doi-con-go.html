@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
+<html lang="vi"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Theo dõi cơn gò</title>
@@ -107,6 +105,46 @@ input:focus-visible,button:focus-visible,.opt:focus-visible{outline:2px solid va
 .modal.open{display:flex}
 .modal img{width:100%;max-width:508px;margin:0 auto;border-radius:12px;display:block}
 .modal .hint{text-align:center;font-size:12.5px;color:var(--dim);margin:14px auto;max-width:400px;line-height:1.6}
+
+/* ---- week chip ---- */
+.wkchip{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:650;cursor:pointer;font-family:var(--sans)}
+.wkchip b{color:var(--pulse);font-family:var(--mono);font-weight:600}
+.wkchip.term b{color:var(--amber)}
+
+/* ---- cancel while timing ---- */
+.cancelWrap{text-align:center;height:0;overflow:visible}
+#cancelBtn{display:none;background:none;border:1px solid var(--line);color:var(--dim);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:650;cursor:pointer;font-family:var(--sans);position:relative;top:-8px}
+.stage.on ~ .cancelWrap #cancelBtn{display:inline-block}
+
+/* ---- preterm warning ---- */
+.warn{display:none;background:var(--card);border-radius:16px;padding:13px 16px;margin-bottom:10px;border:1px solid transparent;font-size:12.5px;line-height:1.55;color:var(--dim)}
+.warn.show{display:block}
+.warn.alert{border-color:var(--rose);background:#2A1620;color:var(--rose)}
+.warn.tip{border-color:var(--line)}
+.warn b{font-weight:650}
+.warn.alert b{color:var(--rose)}
+.warn.tip b{color:var(--pulse)}
+
+/* ---- timeline ---- */
+.tl{background:var(--card);border-radius:14px;padding:12px 14px 10px;margin-bottom:10px}
+.tl .k{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:650;margin-bottom:8px;display:flex;justify-content:space-between}
+.tl canvas{width:100%;height:46px;display:block}
+
+/* ---- kick counter ---- */
+.kick{background:var(--card);border-radius:16px;padding:14px 16px;margin:18px 0}
+.kick .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.kick h2{font-size:12px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:650}
+.kick .undo{background:none;border:0;color:var(--dim);font-size:11.5px;cursor:pointer;font-family:var(--sans);padding:2px 4px}
+.kickRow{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.kickBtn{width:74px;height:74px;border-radius:50%;border:0;cursor:pointer;background:var(--card-2);box-shadow:inset 0 0 0 1px var(--line);color:var(--mist);display:grid;place-items:center;font-family:var(--sans)}
+.kickBtn:active{transform:scale(.94);background:#1E4A44}
+.kickBtn .plus{font-size:22px;line-height:1;color:var(--pulse)}
+.kickBtn .kl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-top:2px}
+.kickStats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kickStats .cell{padding:10px 8px}
+.kick .kmsg{margin:11px 0 0;font-size:12px;line-height:1.55;color:var(--dim)}
+.kick .kmsg.ok{color:var(--pulse)}
+.kick .kmsg.low{color:var(--amber)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -115,40 +153,62 @@ input:focus-visible,button:focus-visible,.opt:focus-visible{outline:2px solid va
 <header>
   <div class="eyebrow">Nhật ký chuyển dạ</div>
   <h1>Theo dõi cơn gò</h1>
+  <button class="wkchip" id="wkChip">Tuần thai <b id="wkNum">29</b> <span style="color:var(--line)">·</span> sửa</button>
 </header>
 
 <div class="stage" id="stage">
   <div class="ring"></div><div class="ring b"></div>
   <button class="big" id="mainBtn">
     <span class="lbl" id="btnLbl">Bắt đầu</span>
-    <span class="num" id="btnNum">0:00</span>
+    <span class="num" id="btnNum">0:06</span>
   </button>
 </div>
-<div class="breathe-hint" id="hint"></div>
+<div class="breathe-hint" id="hint">Cơn gần nhất 11:22 · 0:06</div>
+<div class="cancelWrap"><button id="cancelBtn">Huỷ — bấm nhầm</button></div>
 
 <div class="grid3">
-  <div class="cell"><div class="k">Cơn / 1 giờ</div><div class="v" id="s1">0</div></div>
-  <div class="cell"><div class="k">Dài TB</div><div class="v" id="s2">–</div></div>
-  <div class="cell"><div class="k">Cách nhau</div><div class="v" id="s3">–</div></div>
+  <div class="cell"><div class="k">Cơn / 1 giờ</div><div class="v" id="s1">4</div></div>
+  <div class="cell"><div class="k">Dài TB</div><div class="v" id="s2">0:04</div></div>
+  <div class="cell"><div class="k">Cách nhau</div><div class="v" id="s3">11s</div></div>
 </div>
+
+<div class="tl" id="tlBox" style="display: block;">
+  <div class="k"><span>3 giờ gần nhất</span><span id="tlRange">08:23 → 11:23</span></div>
+  <canvas id="tlCanvas" width="480" height="46"></canvas>
+</div>
+
+<div class="warn show alert" id="preterm"><b>⚠ 4 cơn gò trong 1 giờ ở tuần 29.</b> Trước 37 tuần, gò đều ≥ 4 cơn/giờ có thể là dấu hiệu doạ sinh non — hãy <b>gọi bác sĩ / bệnh viện ngay</b>, kể cả khi chưa đủ dấu hiệu 5–1–1.</div>
 
 <div class="rule" id="rule">
   <h2>Dấu hiệu 5–1–1</h2>
-  <div class="chk" id="c1"><b>✓</b><span>Cách nhau ≤ 5 phút</span></div>
+  <div class="chk ok" id="c1"><b>✓</b><span>Cách nhau ≤ 5 phút</span></div>
   <div class="chk" id="c2"><b>✓</b><span>Mỗi cơn kéo dài ≥ 1 phút</span></div>
   <div class="chk" id="c3"><b>✓</b><span>Đều như vậy ≥ 1 giờ</span></div>
   <p id="ruleMsg">Khi đủ cả ba dấu hiệu, thường là lúc nên vào bệnh viện. Hãy làm theo hướng dẫn riêng của bác sĩ nếu khác.</p>
 </div>
 
+<div class="kick">
+  <div class="top"><h2>Cử động thai (thai máy)</h2><button class="undo" id="kickUndo">Hoàn tác</button></div>
+  <div class="kickRow">
+    <button class="kickBtn" id="kickBtn"><span class="plus">+1</span><span class="kl">Thai máy</span></button>
+    <div class="kickStats">
+      <div class="cell"><div class="k">2 giờ gần nhất</div><div class="v" id="k2h">0</div></div>
+      <div class="cell"><div class="k">Hôm nay</div><div class="v" id="kDay">0</div></div>
+    </div>
+  </div>
+  <p class="kmsg" id="kMsg">Mỗi lần thấy bé đạp, xoay hoặc trườn, bấm +1. Mục tiêu tham khảo: ≥ 10 cử động trong 2 giờ.</p>
+</div>
+
 <div class="hh">
   <div class="eyebrow">Lịch sử</div>
-  <div class="eyebrow" id="count"></div>
+  <div class="eyebrow" id="count">4 cơn</div>
 </div>
-<div id="list"></div>
+<div id="list"><div class="day">Hôm nay</div><div class="row"><span class="t">11:22</span><span class="m">0:06<i>dài</i><span class="sep">·</span>5s<i>cách</i></span><span style="display:flex;gap:6px;align-items:center"><span class="pill m3">Mạnh</span><button class="del" data-id="1787372557893" data-act="edit" aria-label="Sửa" style="font-size:14px">✎</button><button class="del" data-id="1787372557893" aria-label="Xoá">×</button></span></div><div class="row"><span class="t">11:22</span><span class="m">0:03<i>dài</i><span class="sep">·</span>16s<i>cách</i></span><span style="display:flex;gap:6px;align-items:center"><span class="pill m2">Vừa</span><button class="del" data-id="1787372550066" data-act="edit" aria-label="Sửa" style="font-size:14px">✎</button><button class="del" data-id="1787372550066" aria-label="Xoá">×</button></span></div><div class="row"><span class="t">11:22</span><span class="m">0:05<i>dài</i><span class="sep">·</span>11s<i>cách</i></span><span style="display:flex;gap:6px;align-items:center"><span class="pill m2">Vừa</span><button class="del" data-id="1787372536021" data-act="edit" aria-label="Sửa" style="font-size:14px">✎</button><button class="del" data-id="1787372536021" aria-label="Xoá">×</button></span></div><div class="row"><span class="t">11:22</span><span class="m">0:03<i>dài</i><span class="sep">·</span>–<i>cách</i></span><span style="display:flex;gap:6px;align-items:center"><span class="pill m1">Nhẹ</span><button class="del" data-id="1787372523855" data-act="edit" aria-label="Sửa" style="font-size:14px">✎</button><button class="del" data-id="1787372523855" aria-label="Xoá">×</button></span></div></div>
 
 <div class="acts">
   <button class="btn" id="exportImg">Xuất ảnh</button>
   <button class="btn" id="exportCsv">Xuất CSV</button>
+  <button class="btn wide" id="shareBtn">Chia sẻ nhanh cho người thân / bác sĩ</button>
   <button class="btn wide ghost" id="manual">+ Thêm cơn đã bỏ sót</button>
   <button class="btn wide ghost" id="clear">Xoá toàn bộ lịch sử</button>
 </div>
@@ -159,10 +219,10 @@ input:focus-visible,button:focus-visible,.opt:focus-visible{outline:2px solid va
 </div>
 
 <!-- intensity sheet -->
-<div class="sheet" id="sheet">
+<div class="sheet" id="sheet" data-id="1787372557893">
   <div class="inner">
     <h3>Cơn gò vừa rồi mạnh thế nào?</h3>
-    <div class="sub" id="sheetSub"></div>
+    <div class="sub" id="sheetSub">11:22 · kéo dài 0:06</div>
     <div class="opts">
       <button class="opt" data-i="1">Nhẹ</button>
       <button class="opt" data-i="2">Vừa</button>
@@ -176,13 +236,26 @@ input:focus-visible,button:focus-visible,.opt:focus-visible{outline:2px solid va
 <!-- manual sheet -->
 <div class="sheet" id="msheet">
   <div class="inner">
-    <h3>Thêm cơn đã bỏ sót</h3>
+    <h3 id="mTitle">Thêm cơn đã bỏ sót</h3>
     <div class="sub">Nhập giờ bắt đầu và số giây kéo dài</div>
     <input type="time" id="mTime">
     <input type="number" id="mDur" placeholder="Kéo dài (giây)" min="1" max="900">
     <div class="opts">
       <button class="btn" id="mSave" style="grid-column:1/3">Lưu</button>
       <button class="btn ghost" id="mCancel">Huỷ</button>
+    </div>
+  </div>
+</div>
+
+<!-- week sheet -->
+<div class="sheet" id="wsheet">
+  <div class="inner">
+    <h3>Tuần thai hiện tại</h3>
+    <div class="sub">App tự tăng tuần theo thời gian sau khi bạn nhập</div>
+    <input type="number" id="wIn" min="4" max="43" placeholder="Ví dụ: 29">
+    <div class="opts">
+      <button class="btn" id="wSave" style="grid-column:1/3">Lưu</button>
+      <button class="btn ghost" id="wCancel">Huỷ</button>
     </div>
   </div>
 </div>
@@ -212,8 +285,14 @@ async function save(v){
   try{ localStorage.setItem(KEY,JSON.stringify(v)); }catch(e){}
 }
 
-let S={items:[],active:null};
+let S={items:[],active:null,kicks:[],week:null,weekAt:null};
 let tick=null, wake=null;
+
+/* current gestational week: auto-advances after being set */
+function curWeek(){
+  if(S.week==null||S.weekAt==null)return null;
+  return S.week+Math.floor((Date.now()-S.weekAt)/(7*864e5));
+}
 
 /* ---------- format ---------- */
 const p2=n=>String(n).padStart(2,'0');
@@ -262,6 +341,38 @@ function render(){
     ? 'Đủ cả ba dấu hiệu. Gọi cho bác sĩ / bệnh viện và chuẩn bị đi ngay.'
     : 'Khi đủ cả ba dấu hiệu, thường là lúc nên vào bệnh viện. Hãy làm theo hướng dẫn riêng của bác sĩ nếu khác.';
 
+  /* week chip */
+  const wk=curWeek();
+  document.getElementById('wkNum').textContent=wk!=null?wk:'–';
+  document.getElementById('wkChip').classList.toggle('term',wk!=null&&wk>=37);
+
+  /* preterm warning / hydration tip (only before 37 weeks) */
+  const pt=document.getElementById('preterm');
+  pt.className='warn';
+  if(wk!=null&&wk<37){
+    if(r.length>=4){
+      pt.className='warn show alert';
+      pt.innerHTML='<b>⚠ '+r.length+' cơn gò trong 1 giờ ở tuần '+wk+'.</b> Trước 37 tuần, gò đều ≥ 4 cơn/giờ có thể là dấu hiệu doạ sinh non — hãy <b>gọi bác sĩ / bệnh viện ngay</b>, kể cả khi chưa đủ dấu hiệu 5–1–1.';
+    }else if(r.length>=2){
+      pt.className='warn show tip';
+      pt.innerHTML='<b>Gợi ý:</b> Ở tuần '+wk+', gò thưa thớt thường là gò sinh lý (Braxton Hicks) — không đều, không mạnh dần, giảm khi đổi tư thế. Hãy thử <b>uống 1–2 ly nước, đi tiểu, nằm nghiêng trái và nghỉ ngơi</b>, rồi tiếp tục theo dõi. Nếu gò vẫn đều đặn hoặc mạnh dần, gọi bác sĩ.';
+    }
+  }
+
+  /* timeline strip: last 3 hours */
+  drawTimeline();
+
+  /* kicks */
+  const now=Date.now();
+  const k2=S.kicks.filter(t=>t>=now-2*36e5).length;
+  const kd=S.kicks.filter(t=>dayKey(t)===dayKey(now)).length;
+  document.getElementById('k2h').textContent=k2;
+  document.getElementById('kDay').textContent=kd;
+  const km=document.getElementById('kMsg');
+  if(k2>=10){km.className='kmsg ok';km.textContent='Đã đủ ≥ 10 cử động trong 2 giờ — bé đang hoạt động tốt.'}
+  else if(kd===0){km.className='kmsg';km.textContent='Mỗi lần thấy bé đạp, xoay hoặc trườn, bấm +1. Mục tiêu tham khảo: ≥ 10 cử động trong 2 giờ.'}
+  else{km.className='kmsg';km.textContent='Đang đếm… '+k2+'/10 cử động trong 2 giờ gần nhất. Nếu bé máy ít hơn hẳn mọi ngày, hãy liên hệ bác sĩ.'}
+
   document.getElementById('count').textContent=d.length?d.length+' cơn':'';
   const L=document.getElementById('list');
   if(!d.length){L.innerHTML='<div class="empty">Chưa có cơn gò nào được ghi.<br>Bấm nút tròn khi cơn gò bắt đầu, bấm lần nữa khi hết.</div>';return}
@@ -273,12 +384,47 @@ function render(){
     h+='<div class="row"><span class="t">'+clock(x.start)+'</span><span class="m">'+mmss(x.dur)+'<i>dài</i>'
       +'<span class="sep">·</span>'+gapTxt(x.gap)+'<i>cách</i>'
       +(x.note?'<span class="note">'+esc(x.note)+'</span>':'')
-      +'</span><span style="display:flex;gap:6px;align-items:center">'+pi+'<button class="del" data-id="'+x.id+'" aria-label="Xoá">×</button></span></div>';
+      +'</span><span style="display:flex;gap:6px;align-items:center">'+pi
+      +'<button class="del" data-id="'+x.id+'" data-act="edit" aria-label="Sửa" style="font-size:14px">✎</button>'
+      +'<button class="del" data-id="'+x.id+'" aria-label="Xoá">×</button></span></div>';
   });
   L.innerHTML=h;
   L.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+    if(b.dataset.act==='edit'){openEdit(b.dataset.id);return}
     S.items=S.items.filter(i=>i.id!=b.dataset.id);await save(S);render();
   });
+}
+
+/* ---------- timeline (last 3h) ---------- */
+function drawTimeline(){
+  const box=document.getElementById('tlBox');
+  const now=Date.now(),from=now-3*36e5;
+  const d=withDerived().filter(x=>x.end>=from);
+  if(!d.length){box.style.display='none';return}
+  box.style.display='block';
+  document.getElementById('tlRange').textContent=clock(from)+' → '+clock(now);
+  const c=document.getElementById('tlCanvas');
+  const W=c.clientWidth||460,H=46,dpr=window.devicePixelRatio||1;
+  c.width=W*dpr;c.height=H*dpr;
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  g.strokeStyle='#2A315A';g.lineWidth=1;
+  g.beginPath();g.moveTo(0,32.5);g.lineTo(W,32.5);g.stroke();
+  for(let i=0;i<=3;i++){
+    const x=W*i/3;
+    g.beginPath();g.moveTo(x,28);g.lineTo(x,37);g.stroke();
+  }
+  const col=['#79D9C0','#79D9C0','#F3B45E','#E88A9A'];
+  d.forEach(it=>{
+    const x0=Math.max(0,(it.start-from)/(now-from)*W);
+    const x1=Math.min(W,(it.end-from)/(now-from)*W);
+    const hgt=8+Math.min(18,(it.dur/1000)/90*18); // taller = longer contraction
+    g.fillStyle=col[it.intensity||1];
+    g.globalAlpha=.9;
+    g.fillRect(x0,32-hgt,Math.max(3,x1-x0),hgt);
+    g.globalAlpha=1;
+  });
+  g.fillStyle='#98A0C8';g.font='9px -apple-system,sans-serif';
+  g.fillText('cao hơn = kéo dài hơn · màu theo cường độ',0,45);
 }
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -311,6 +457,14 @@ async function toggle(){
 }
 document.getElementById('mainBtn').onclick=toggle;
 
+/* ---------- cancel a mistaken start ---------- */
+document.getElementById('cancelBtn').onclick=async()=>{
+  if(S.active==null)return;
+  S.active=null;clearInterval(tick);
+  try{ if(wake){await wake.release();wake=null} }catch(e){}
+  await save(S);render();
+};
+
 /* ---------- intensity sheet ---------- */
 async function closeSheet(){
   const sh=document.getElementById('sheet');
@@ -325,22 +479,93 @@ document.querySelectorAll('.opt[data-i]').forEach(b=>b.onclick=async()=>{
 });
 document.getElementById('skip').onclick=closeSheet;
 
-/* ---------- manual add ---------- */
+/* ---------- manual add / edit ---------- */
+const ms=document.getElementById('msheet');
 document.getElementById('manual').onclick=()=>{
   const n=new Date();
+  delete ms.dataset.edit;
+  document.getElementById('mTitle').textContent='Thêm cơn đã bỏ sót';
   document.getElementById('mTime').value=p2(n.getHours())+':'+p2(n.getMinutes());
   document.getElementById('mDur').value='';
-  document.getElementById('msheet').classList.add('open');
+  ms.classList.add('open');
 };
-document.getElementById('mCancel').onclick=()=>document.getElementById('msheet').classList.remove('open');
+function openEdit(id){
+  const it=S.items.find(i=>i.id===id);
+  if(!it)return;
+  ms.dataset.edit=id;
+  document.getElementById('mTitle').textContent='Sửa cơn gò '+clock(it.start);
+  document.getElementById('mTime').value=clock(it.start);
+  document.getElementById('mDur').value=Math.round((it.end-it.start)/1000);
+  ms.classList.add('open');
+}
+document.getElementById('mCancel').onclick=()=>ms.classList.remove('open');
 document.getElementById('mSave').onclick=async()=>{
   const t=document.getElementById('mTime').value, dur=+document.getElementById('mDur').value;
   if(!t||!dur||dur<1)return;
   const [hh,mm]=t.split(':').map(Number);
-  const d=new Date();d.setHours(hh,mm,0,0);
-  if(d.getTime()>Date.now())d.setDate(d.getDate()-1);
-  S.items.push({id:Date.now()+'',start:d.getTime(),end:d.getTime()+dur*1000,intensity:null,note:'nhập tay'});
-  await save(S);document.getElementById('msheet').classList.remove('open');render();
+  const eid=ms.dataset.edit;
+  if(eid){
+    const it=S.items.find(i=>i.id===eid);
+    if(it){
+      const d=new Date(it.start);d.setHours(hh,mm,0,0);
+      if(d.getTime()>Date.now())d.setDate(d.getDate()-1);
+      it.start=d.getTime();it.end=d.getTime()+dur*1000;
+    }
+  }else{
+    const d=new Date();d.setHours(hh,mm,0,0);
+    if(d.getTime()>Date.now())d.setDate(d.getDate()-1);
+    S.items.push({id:Date.now()+'',start:d.getTime(),end:d.getTime()+dur*1000,intensity:null,note:'nhập tay'});
+  }
+  await save(S);ms.classList.remove('open');render();
+};
+
+/* ---------- kick counter ---------- */
+document.getElementById('kickBtn').onclick=async()=>{
+  if(navigator.vibrate)navigator.vibrate(12);
+  S.kicks.push(Date.now());
+  if(S.kicks.length>2000)S.kicks=S.kicks.slice(-2000);
+  await save(S);render();
+};
+document.getElementById('kickUndo').onclick=async()=>{
+  if(!S.kicks.length)return;
+  S.kicks.pop();await save(S);render();
+};
+
+/* ---------- week setting ---------- */
+const ws=document.getElementById('wsheet');
+document.getElementById('wkChip').onclick=()=>{
+  document.getElementById('wIn').value=curWeek()??'';
+  ws.classList.add('open');
+};
+document.getElementById('wCancel').onclick=()=>ws.classList.remove('open');
+document.getElementById('wSave').onclick=async()=>{
+  const w=+document.getElementById('wIn').value;
+  if(!w||w<4||w>43)return;
+  S.week=w;S.weekAt=Date.now();
+  await save(S);ws.classList.remove('open');render();
+};
+
+/* ---------- quick share ---------- */
+document.getElementById('shareBtn').onclick=async()=>{
+  const d=withDerived();
+  const r=recent(60);
+  const wk=curWeek();
+  const now=Date.now();
+  const k2=S.kicks.filter(t=>t>=now-2*36e5).length;
+  const lines=['Theo dõi cơn gò — '+new Date().toLocaleDateString('vi-VN')+' '+clock(now)];
+  if(wk!=null)lines.push('Tuần thai: '+wk);
+  lines.push('1 giờ qua: '+r.length+' cơn'+(r.length?', dài TB '+mmss(avg(r.map(x=>x.dur)))+(r.filter(x=>x.gap!=null).length?', cách nhau TB '+gapTxt(avg(r.map(x=>x.gap).filter(v=>v!=null))):''):''));
+  lines.push('Thai máy 2 giờ qua: '+k2+' lần');
+  if(d.length){
+    lines.push('','10 cơn gần nhất:');
+    d.slice(-10).forEach(x=>lines.push(clock(x.start)+' — dài '+mmss(x.dur)+(x.gap!=null?', cách '+gapTxt(x.gap):'')+(x.intensity?' ('+['','nhẹ','vừa','mạnh'][x.intensity]+')':'')));
+  }
+  const text=lines.join('\n');
+  if(navigator.share){
+    try{ await navigator.share({title:'Theo dõi cơn gò',text}); return; }catch(e){ if(e.name==='AbortError')return; }
+  }
+  try{ await navigator.clipboard.writeText(text); alert('Đã sao chép tóm tắt — dán vào tin nhắn để gửi.'); }
+  catch(e){ alert(text); }
 };
 
 /* ---------- clear ---------- */
@@ -440,11 +665,18 @@ document.getElementById('closeModal').onclick=()=>document.getElementById('modal
 /* ---------- boot ---------- */
 (async()=>{
   const saved=await load();
-  if(saved&&Array.isArray(saved.items))S={items:saved.items,active:saved.active??null};
+  if(saved&&Array.isArray(saved.items)){
+    S={items:saved.items,active:saved.active??null,
+       kicks:Array.isArray(saved.kicks)?saved.kicks:[],
+       week:saved.week??null,weekAt:saved.weekAt??null};
+  }
+  /* preset: week 29 as of 22/08/2026 — auto-advances; tap the chip to change */
+  if(S.week==null){S.week=29;S.weekAt=new Date(2026,7,22).getTime();}
   render();
   if(S.active!=null)startTick();
   setInterval(()=>{if(S.active==null)render()},30000);
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
