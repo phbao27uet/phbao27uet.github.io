@@ -168,7 +168,25 @@ label.fl{display:block;font-size:11px;letter-spacing:.08em;text-transform:upperc
 .kick .kmsg{margin:11px 0 0;font-size:12px;line-height:1.55;color:var(--dim)}
 .kick .kmsg.ok{color:var(--pulse)}
 .kick .kmsg.low{color:var(--amber)}
-#kchart{width:100%;height:84px;display:block;margin-top:12px}
+.kchartH{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 6px}
+.kchartH .t{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:650}
+.kchartH .s{font-size:11px;color:var(--dim);font-family:var(--mono)}
+#kchart,#hchart{width:100%;display:block}
+#kchart{height:84px;cursor:pointer}
+#hchart{height:96px}
+.kday{background:var(--card-2);border-radius:12px;padding:12px 13px;margin-top:10px;font-size:12.5px;line-height:1.6;color:var(--dim)}
+.kday .kdT{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.kday .kdT b{color:var(--mist);font-size:13.5px;font-weight:650}
+.kday .kdT button{background:none;border:0;color:var(--pulse);font-size:11.5px;cursor:pointer;font-family:var(--sans);padding:2px 4px}
+.kday .kg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.kday .kg div{background:var(--card);border-radius:9px;padding:7px 6px;text-align:center}
+.kday .kg span{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:650}
+.kday .kg em{font-style:normal;font-family:var(--mono);font-size:15px;color:var(--mist);font-weight:600}
+.kday .kl2{margin:2px 0}
+.kday .kl2 i{font-style:normal;color:var(--mist)}
+.kday .red{color:var(--rose)}
+.medBadge{background:#2A1620;border:1px solid #4A2630;color:var(--rose);border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.55;margin-bottom:12px}
+.medBadge b{font-weight:700}
 
 /* ---- health ---- */
 .hgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -271,12 +289,18 @@ label.fl{display:block;font-size:11px;letter-spacing:.08em;text-transform:upperc
   <div class="kickRow">
     <button class="kickBtn" id="kickBtn"><span class="plus">+1</span><span class="kl">Thai máy</span></button>
     <div class="kickStats">
-      <div class="cell"><div class="k">2 giờ gần nhất</div><div class="v" id="k2h">0</div></div>
+      <div class="cell"><div class="k">1 giờ gần nhất</div><div class="v" id="k1h">0</div></div>
       <div class="cell"><div class="k">Hôm nay</div><div class="v" id="kDay">0</div></div>
     </div>
   </div>
   <p class="kmsg" id="kMsg"></p>
+
+  <div class="kchartH"><span class="t" id="hchartT">Theo giờ · hôm nay</span><span class="s" id="hchartS"></span></div>
+  <canvas id="hchart"></canvas>
+
+  <div class="kchartH"><span class="t">7 ngày · chạm vào cột để xem chi tiết</span></div>
   <canvas id="kchart"></canvas>
+  <div class="kday" id="kDayDetail" style="display:none"></div>
 </div>
 
 <!-- mother health -->
@@ -330,6 +354,7 @@ label.fl{display:block;font-size:11px;letter-spacing:.08em;text-transform:upperc
 <div class="sec" id="secCon">
   <div class="sec-h"><h2>Liên hệ khẩn cấp</h2><span class="meta"><span id="conMeta"></span><span class="car">▶</span></span></div>
   <div class="sec-b">
+    <div class="medBadge" id="medBadge" style="display:none"></div>
     <div id="conList"></div>
     <div class="cadd">
       <input type="text" id="cName" placeholder="Tên (BV, bác sĩ…)">
@@ -630,7 +655,13 @@ function renderBag(){
 
 /* ---------- contacts ---------- */
 function renderContacts(){
-  $('conMeta').textContent=S.contacts.length?S.contacts.length+' số':'';
+  $('conMeta').textContent=[S.blood?'nhóm '+S.blood:'',S.contacts.length?S.contacts.length+' số':''].filter(Boolean).join(' · ');
+  const mb=$('medBadge');
+  if(S.blood||S.medNote){
+    mb.style.display='block';
+    mb.innerHTML=(S.blood?'Nhóm máu <b>'+esc(S.blood)+'</b>':'')+(S.blood&&S.medNote?'<br>':'')+(S.medNote?'⚠ <b>'+esc(S.medNote)+'</b>':'')
+      +'<br><span style="color:var(--dim);font-size:11.5px">Nhắc nhân viên y tế khi nhập viện và trước khi dùng bất kỳ kháng sinh nào.</span>';
+  }else mb.style.display='none';
   $('conList').innerHTML=S.contacts.map(c=>
     '<div class="crow"><span>'+esc(c.name)+'<br><span class="cp">'+esc(c.phone)+'</span></span>'
     +'<a class="callBtn" href="tel:'+esc(c.phone.replace(/[^+\d]/g,''))+'">Gọi</a>'
@@ -699,9 +730,9 @@ function render(){
 
   /* kicks */
   const now=Date.now();
-  const k2=S.kicks.filter(t=>t>=now-2*36e5).length;
+  const k1=S.kicks.filter(t=>t>=now-36e5).length;
   const kd=S.kicks.filter(t=>dayKey(t)===dayKey(now)).length;
-  $('k2h').textContent=k2;
+  $('k1h').textContent=k1;
   $('kDay').textContent=kd;
   const km=$('kMsg');
   /* so với trung bình 7 ngày trước */
@@ -710,13 +741,16 @@ function render(){
   const prev=[];
   for(let i=1;i<=7;i++){const k=dayKey(now-i*864e5);if(counts[k])prev.push(counts[k])}
   const avgPrev=avg(prev);
-  if(k2>=10){km.className='kmsg ok';km.textContent='Đã đủ ≥ 10 cử động trong 2 giờ — bé đang hoạt động tốt.'}
+  if(k1>=5){km.className='kmsg ok';km.textContent='Đã đủ ≥ 5 cử động trong 1 giờ — bé đang hoạt động tốt.'}
   else if(avgPrev&&kd>0&&new Date().getHours()>=19&&kd<avgPrev*0.5){
-    km.className='kmsg low';km.textContent='Hôm nay bé máy ít hơn hẳn mọi ngày ('+kd+' so với trung bình '+Math.round(avgPrev)+'). Ở tuần '+(wk||'cuối')+', hãy nằm nghiêng trái, đếm tập trung 2 giờ — nếu vẫn ít, đi khám ngay, đừng đợi đến mai.';
+    km.className='kmsg low';km.textContent='Hôm nay bé máy ít hơn hẳn mọi ngày ('+kd+' so với trung bình '+Math.round(avgPrev)+'). Ở tuần '+(wk||'cuối')+', hãy nằm nghiêng trái, đếm tập trung 1 giờ — nếu chưa đủ 5 cử động, đi khám ngay, đừng đợi đến mai.';
   }
-  else if(kd===0){km.className='kmsg';km.textContent='Mỗi lần thấy bé đạp, xoay hoặc trườn, bấm +1. Mục tiêu tham khảo: ≥ 10 cử động trong 2 giờ.'}
-  else{km.className='kmsg';km.textContent='Đang đếm… '+k2+'/10 cử động trong 2 giờ gần nhất. Nếu bé máy ít hơn hẳn mọi ngày, hãy liên hệ bác sĩ.'}
+  else if(kd===0){km.className='kmsg';km.textContent='Mỗi lần thấy bé đạp, xoay hoặc trườn, bấm +1. Mục tiêu tham khảo: ≥ 5 cử động trong 1 giờ.'}
+  else{km.className='kmsg';km.textContent='Đang đếm… '+k1+'/5 cử động trong 1 giờ gần nhất. Nếu cả giờ chưa đủ 5, hãy nằm nghiêng trái đếm thêm 1 giờ; vẫn ít thì liên hệ bác sĩ.'}
+  if(kSel&&kSel<dayKey(now-6*864e5))kSel=null;
   drawKickChart(counts);
+  drawHourChart();
+  renderKickDetail();
 
   renderSigns();
   renderHealth();
@@ -772,32 +806,142 @@ function drawTimeline(){
   g.fillText('cao hơn = kéo dài hơn · màu theo cường độ',0,45);
 }
 
-/* ---------- 7-day kick chart ---------- */
-function drawKickChart(counts){
-  const c=$('kchart');
-  const W=c.clientWidth||460,H=84,dpr=window.devicePixelRatio||1;
+/* ---------- kick charts ---------- */
+let kSel=null;          // dayKey đang chọn ở biểu đồ 7 ngày (null = hôm nay, ẩn chi tiết)
+let kDays=[];           // vị trí các cột để bắt sự kiện chạm
+const selKey=()=>kSel||dayKey(Date.now());
+function dayLabelK(k){
+  if(k===dayKey(Date.now()))return 'hôm nay';
+  if(k===dayKey(Date.now()-864e5))return 'hôm qua';
+  const d=new Date(k+'T12:00:00');return d.getDate()+'/'+(d.getMonth()+1);
+}
+function hourCounts(k){
+  const h=new Array(24).fill(0);
+  S.kicks.forEach(t=>{if(dayKey(t)===k)h[new Date(t).getHours()]++});
+  return h;
+}
+function prepCanvas(c,H){
+  const W=c.clientWidth||460,dpr=window.devicePixelRatio||1;
   c.width=W*dpr;c.height=H*dpr;
   const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  return [g,W];
+}
+function drawKickChart(counts){
+  const c=$('kchart'),H=84;
+  const [g,W]=prepCanvas(c,H);
   const days=[];
   for(let i=6;i>=0;i--){const ts=Date.now()-i*864e5;days.push({k:dayKey(ts),ts})}
   const vals=days.map(x=>counts[x.k]||0);
   const max=Math.max(10,...vals);
-  const bw=Math.min(40,(W-20)/7-8);
-  const base=H-16;
+  const slot=(W-20)/7,bw=Math.min(40,slot-8);
+  const base=H-16,sk=selKey();
+  kDays=[];
   days.forEach((x,i)=>{
     const v=vals[i],bh=v?Math.max(3,v/max*(base-14)):0;
-    const cx=10+(W-20)/7*i+((W-20)/7-bw)/2;
-    g.fillStyle=i===6?'#79D9C0':'#2A315A';
+    const cx=10+slot*i+(slot-bw)/2;
+    kDays.push({k:x.k,x0:10+slot*i,x1:10+slot*(i+1)});
+    const sel=x.k===sk;
+    if(sel){g.fillStyle='rgba(121,217,192,.08)';g.fillRect(10+slot*i+2,0,slot-4,H-14)}
+    g.fillStyle=sel?'#79D9C0':'#2A315A';
     if(v){g.fillRect(cx,base-bh,bw,bh)}
     else{g.fillStyle='#1D2340';g.fillRect(cx,base-2,bw,2)}
-    g.fillStyle=i===6?'#79D9C0':'#98A0C8';
-    g.font='9px -apple-system,sans-serif';g.textAlign='center';
+    g.fillStyle=sel?'#79D9C0':'#98A0C8';
+    g.font=(sel?'600 ':'')+'9px -apple-system,sans-serif';g.textAlign='center';
     const d=new Date(x.ts);
     g.fillText(i===6?'nay':d.getDate()+'/'+(d.getMonth()+1),cx+bw/2,H-4);
     if(v){g.fillText(String(v),cx+bw/2,base-bh-4)}
   });
   g.textAlign='left';
 }
+function drawHourChart(){
+  const c=$('hchart'),H=96;
+  const [g,W]=prepCanvas(c,H);
+  const k=selKey(),hc=hourCounts(k),isToday=k===dayKey(Date.now());
+  const nowH=new Date().getHours();
+  $('hchartT').textContent='Theo giờ · '+dayLabelK(k);
+  const total=hc.reduce((a,b)=>a+b,0),goodH=hc.filter(v=>v>=5).length;
+  $('hchartS').textContent=total?total+' lần · '+goodH+' giờ đạt ≥5':'chưa có dữ liệu';
+  const max=Math.max(6,...hc);
+  const top=12,base=H-16,slot=W/24,bw=Math.max(3,slot-3);
+  // đường mục tiêu 5 lần/giờ
+  const y5=base-5/max*(base-top);
+  g.strokeStyle='rgba(243,180,94,.45)';g.setLineDash([3,3]);g.lineWidth=1;
+  g.beginPath();g.moveTo(0,Math.round(y5)+.5);g.lineTo(W,Math.round(y5)+.5);g.stroke();g.setLineDash([]);
+  g.fillStyle='#F3B45E';g.font='9px -apple-system,sans-serif';g.textAlign='right';
+  g.fillText('5',W-1,y5-3);
+  g.textAlign='center';
+  hc.forEach((v,h)=>{
+    const x=h*slot+(slot-bw)/2;
+    const future=isToday&&h>nowH;
+    if(v){
+      const bh=Math.max(2,v/max*(base-top));
+      g.fillStyle=v>=5?'#79D9C0':(isToday&&h===nowH?'#5E8F87':'#3B4580');
+      g.fillRect(x,base-bh,bw,bh);
+      g.fillStyle='#E9EBF7';g.font='9px -apple-system,sans-serif';
+      if(slot>=11)g.fillText(String(v),x+bw/2,base-bh-3);
+    }else{
+      g.fillStyle=future?'#151A32':'#1D2340';g.fillRect(x,base-2,bw,2);
+    }
+    if(h%3===0){
+      g.fillStyle=isToday&&h<=nowH&&nowH<h+3?'#79D9C0':'#98A0C8';
+      g.font='9px -apple-system,sans-serif';
+      g.fillText(h+'h',x+bw/2,H-4);
+    }
+  });
+  if(isToday){ // vạch giờ hiện tại
+    const m=new Date().getMinutes();
+    const xn=(nowH+m/60)*slot;
+    g.strokeStyle='rgba(121,217,192,.6)';g.beginPath();g.moveTo(Math.round(xn)+.5,top-4);g.lineTo(Math.round(xn)+.5,base);g.stroke();
+  }
+  g.textAlign='left';
+}
+function renderKickDetail(){
+  const box=$('kDayDetail');
+  if(!kSel){box.style.display='none';return}
+  const k=kSel;
+  const ts=S.kicks.filter(t=>dayKey(t)===k).sort((a,b)=>a-b);
+  const hc=hourCounts(k);
+  const peak=hc.indexOf(Math.max(...hc));
+  /* cửa sổ 1 giờ liên tục nhiều nhất & thời gian ngắn nhất để đạt 5 cử động */
+  let best=0,fast=null;
+  for(let i=0,j=0;j<ts.length;j++){
+    while(ts[j]-ts[i]>36e5)i++;
+    best=Math.max(best,j-i+1);
+    if(j>=4){const span=ts[j]-ts[j-4];if(span<=36e5&&(fast==null||span<fast))fast=span}
+  }
+  const cons=withDerived().filter(x=>dayKey(x.start)===k);
+  const he=S.health[k];
+  const sg=S.signs.filter(s=>dayKey(s.ts)===k).sort((a,b)=>a.ts-b.ts);
+  const d=new Date(k+'T12:00:00');
+  const wd=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
+  let h='<div class="kdT"><b>'+wd+', '+d.getDate()+'/'+(d.getMonth()+1)+'</b><button id="kDetClose">Đóng ✕</button></div>';
+  h+='<div class="kg"><div><span>Tổng thai máy</span><em>'+ts.length+'</em></div>'
+    +'<div><span>Giờ đạt ≥5</span><em>'+hc.filter(v=>v>=5).length+'</em></div>'
+    +'<div><span>Nhiều nhất/1h</span><em>'+best+'</em></div></div>';
+  if(ts.length){
+    h+='<div class="kl2">Lần đầu <i>'+clock(ts[0])+'</i> · lần cuối <i>'+clock(ts[ts.length-1])+'</i> · sôi nổi nhất lúc <i>'+peak+'h–'+(peak+1)+'h</i> ('+hc[peak]+' lần)</div>';
+    h+='<div class="kl2">'+(fast!=null?'Đủ 5 cử động nhanh nhất trong <i>'+Math.max(1,Math.round(fast/6e4))+' phút</i>':'<span class="red">Chưa có khung 1 giờ nào đủ 5 cử động</span>')+'</div>';
+  }else h+='<div class="kl2">Không ghi thai máy ngày này.</div>';
+  h+='<div class="kl2">Cơn gò: <i>'+(cons.length?cons.length+' cơn, dài TB '+mmss(avg(cons.map(x=>x.dur))):'không ghi')+'</i></div>';
+  if(he){
+    const danger=healthDanger(he);
+    const p=[];if(he.sys)p.push('HA '+he.sys+'/'+he.dia);if(he.wt)p.push(he.wt+'kg');
+    p.push(['không phù','phù nhẹ','phù nhiều'][he.sw||0]);
+    if((he.sym||[]).length)p.push((he.sym||[]).map(s=>SYM_LABEL[s]).join(', '));
+    h+='<div class="kl2'+(danger?' red':'')+'">Sức khoẻ mẹ: <i'+(danger?' class="red"':'')+'>'+esc(p.join(' · '))+'</i></div>';
+  }
+  if(sg.length)h+='<div class="kl2 red">Dấu hiệu: '+sg.map(s=>esc(SIGN_LABEL[s.type])+' '+clock(s.ts)+(s.detail?' ('+esc(s.detail)+')':'')).join('; ')+'</div>';
+  box.innerHTML=h;box.style.display='block';
+  $('kDetClose').onclick=()=>{kSel=null;render()};
+}
+$('kchart').addEventListener('click',ev=>{
+  const r=$('kchart').getBoundingClientRect(),x=ev.clientX-r.left;
+  const hit=kDays.find(b=>x>=b.x0&&x<b.x1);
+  if(!hit)return;
+  kSel=(kSel===hit.k)?null:hit.k;
+  render();
+  if(kSel)$('kDayDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
 
 /* ---------- timer ---------- */
 function startTick(){
@@ -981,7 +1125,7 @@ $('cAdd').onclick=async()=>{
 $('medSave').onclick=async()=>{
   S.blood=$('bloodIn').value.trim();
   S.medNote=$('medIn').value.trim();
-  await save(S);
+  await save(S);renderContacts();
   $('medSave').textContent='Đã lưu ✓';
   setTimeout(()=>$('medSave').textContent='Lưu thông tin y khoa',1600);
 };
@@ -1020,11 +1164,12 @@ async function shareText(text,title){
 }
 $('shareBtn').onclick=async()=>{
   const d=withDerived(),r=recent(60),ga=gaInfo(),now=Date.now();
-  const k2=S.kicks.filter(t=>t>=now-2*36e5).length;
+  const k1=S.kicks.filter(t=>t>=now-36e5).length;
   const lines=['Theo dõi cơn gò — '+new Date().toLocaleDateString('vi-VN')+' '+clock(now)];
   if(ga)lines.push('Tuổi thai: '+ga.w+' tuần '+ga.d+' ngày');
+  if(S.blood||S.medNote)lines.push('Mẹ: '+[S.blood?'nhóm máu '+S.blood:'',S.medNote].filter(Boolean).join(' · '));
   lines.push('1 giờ qua: '+r.length+' cơn'+(r.length?', dài TB '+mmss(avg(r.map(x=>x.dur)))+(r.filter(x=>x.gap!=null).length?', cách nhau TB '+gapTxt(avg(r.map(x=>x.gap).filter(v=>v!=null))):''):''));
-  lines.push('Thai máy 2 giờ qua: '+k2+' lần');
+  lines.push('Thai máy 1 giờ qua: '+k1+' lần (mục tiêu ≥ 5)');
   const th=S.health[dayKey(now)];
   if(th&&th.sys)lines.push('Huyết áp hôm nay: '+th.sys+'/'+th.dia+' mmHg'+(th.wt?' · '+th.wt+'kg':''));
   const us=S.signs.filter(s=>s.ts>now-24*36e5);
@@ -1054,7 +1199,7 @@ function buildReport(){
     const cons=d.filter(x=>dayKey(x.start)===k);
     const parts=[];
     parts.push(cons.length?cons.length+' cơn gò (dài TB '+mmss(avg(cons.map(x=>x.dur)))+')':'không ghi cơn gò');
-    parts.push('thai máy: '+(kc[k]||0));
+    parts.push('thai máy: '+(kc[k]||0)+' (giờ đạt ≥5: '+hourCounts(k).filter(v=>v>=5).length+')');
     const he=S.health[k];
     if(he){
       const hp=[];
@@ -1168,6 +1313,13 @@ $('closeModal').onclick=()=>$('modal').classList.remove('open');
   }
   /* preset: week 29 as of 22/08/2026 (→ tuần 36 hiện tại) — tự tăng; bấm chip để nhập ngày dự sinh */
   if(S.edd==null&&S.week==null){S.week=29;S.weekAt=new Date(2026,7,22).getTime();}
+  /* điền sẵn thông tin y khoa của mẹ (một lần — sau đó vẫn sửa được) */
+  if(!saved||!saved.medPreset1){
+    S.blood='A+';
+    S.medNote='Dị ứng kháng sinh cefixim (nhóm cephalosporin)';
+    S.medPreset1=true;
+    await save(S);
+  }else S.medPreset1=true;
   $('bloodIn').value=S.blood;$('medIn').value=S.medNote;
   render();
   if(S.active!=null)startTick();
